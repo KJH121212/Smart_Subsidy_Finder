@@ -3,6 +3,7 @@ import time
 from typing import List
 from langchain.vectorstores import FAISS
 from langchain_core.embeddings import Embeddings
+from tqdm import tqdm
 
 class UpstageEmbeddings(Embeddings):
     def __init__(self, api_key: str, api_url: str, batch_size: int = 64):
@@ -17,7 +18,7 @@ class UpstageEmbeddings(Embeddings):
         }
 
         all_embeddings = []
-        for i in range(0, len(texts), self.batch_size):
+        for i in tqdm(range(0, len(texts), self.batch_size), desc="🔍 임베딩 진행 중"):
             batch = texts[i:i + self.batch_size]
             payload = {"input": batch, "model": "embedding-query"}
             response = requests.post(self.api_url, headers=headers, json=payload)
@@ -26,6 +27,7 @@ class UpstageEmbeddings(Embeddings):
             all_embeddings.extend([item["embedding"] for item in result["data"]])
             time.sleep(0.1)
         return all_embeddings
+
 
     def embed_query(self, text: str) -> List[float]:
         return self.embed_documents([text])[0]

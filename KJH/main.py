@@ -2,16 +2,19 @@ import os
 import json
 from dotenv import load_dotenv
 from langchain_community.vectorstores import FAISS
-
 from data_pipeline.gov24_data_pipeline import run_gov24_data_pipeline
 from modules.data_loader import detect_changes, convert_to_documents
 from modules.chunk_splitter import split_by_char, split_by_token
 from modules.upstage_embedding import UpstageEmbeddings
 from modules.llm_prompt import make_prompt, query_solar
+from tqdm import tqdm
+
 # path 설정
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))   # c:\Users\jihu6\code\RAG\KJH 
 DATA_PATH = os.path.join(BASE_DIR, "data", "combined_service_data_merged.json")
 PREV_PATH = os.path.join(BASE_DIR, "data", "combined_service_data_merged_prev.json")
+index_path = os.path.join(BASE_DIR, "faiss_index")
+
 
 # 환경변수 가져오기
 env_path = os.path.join(BASE_DIR, ".env")
@@ -54,7 +57,19 @@ if added or updated or deleted:
 
     # FAISS 인덱스 생성 및 저장
     db = FAISS.from_documents(token_split_docs, embedding)  # 문서 임베딩 후 FAISS 인덱스 생성
+    os.makedirs(index_path, exist_ok=True)
     db.save_local("faiss_index")  # 인덱스를 로컬 디렉토리에 저장
+
+    # ✅ 저장 확인 코드
+    index_file = os.path.join(index_path, "index.faiss")
+    pkl_file = os.path.join(index_path, "index.pkl")
+
+    if os.path.exists(index_file) and os.path.exists(pkl_file):
+        print("✅ FAISS 인덱스 저장 확인됨")
+        print("📄 저장된 파일 목록:", os.listdir(index_path))
+    else:
+        print("❌ FAISS 인덱스 저장 실패 또는 파일 없음")
+
 else:
     print("수정사항이 없어 임베딩 과정을 건너 뛰었습니다.")
 

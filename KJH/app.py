@@ -9,6 +9,17 @@ from modules.chunk_splitter import split_by_token, split_by_char
 from modules.upstage_embedding import UpstageEmbeddings
 from modules.llm_prompt import make_prompt, query_solar
 
+if added or updated or deleted or not os.path.exists(INDEX_FILE):
+    documents = convert_to_documents(new_data)
+    split_docs = split_by_char(documents)
+    db = FAISS.from_documents(split_docs, embedding)
+
+    # ✅ 디렉토리가 없으면 생성
+    os.makedirs(INDEX_DIR, exist_ok=True)
+
+    db.save_local(INDEX_DIR)
+
+
 # 📁 경로 설정
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_PATH = os.path.join(BASE_DIR, "data", "combined_service_data_merged.json")
